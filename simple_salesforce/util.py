@@ -20,21 +20,18 @@ def getUniqueElementValueFromXmlString(xmlString, elementName):
     """
     xmlStringAsDom = xml.dom.minidom.parseString(xmlString)
     elementsByName = xmlStringAsDom.getElementsByTagName(elementName)
-    elementValue = None
-    if len(elementsByName) > 0:
-        elementValue = (
+    return (
             elementsByName[0]
             .toxml()
             .replace('<' + elementName + '>', '')
             .replace('</' + elementName + '>', '')
-        )
-    return elementValue
+        ) if len(elementsByName) > 0 else None
 
 
 def date_to_iso8601(date):
     """Returns an ISO8601 string from a date"""
     datetimestr = date.strftime('%Y-%m-%dT%H:%M:%S')
-    timezone_sign = date.strftime('%z')[0:1]
+    timezone_sign = date.strftime('%z')[:1]
     timezone_str = '%s:%s' % (
         date.strftime('%z')[1:3],
         date.strftime('%z')[3:5],

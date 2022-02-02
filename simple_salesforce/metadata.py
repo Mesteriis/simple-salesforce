@@ -286,11 +286,12 @@ class SfdcMetadataApi:
             test_level = "<met:testLevel>%s</met:testLevel>" % testLevel
             attributes['testLevel'] = test_level
 
-        tests_tag = ''
         if tests and \
                 str(testLevel).lower() == 'runspecifiedtests':
-            for test in tests:
-                tests_tag += '<met:runTests>%s</met:runTests>\n' % test
+            tests_tag = ''.join(
+                '<met:runTests>%s</met:runTests>\n' % test for test in tests
+            )
+
             attributes['tests'] = tests_tag
 
         request = DEPLOY_MSG.format(**attributes)
@@ -471,17 +472,16 @@ class SfdcMetadataApi:
         unpackaged = ''
         if kwargs.get('unpackaged'):
             for metadata_type in kwargs.get('unpackaged'):
-                if isinstance(kwargs.get('unpackaged'), dict):
-                    members = kwargs.get('unpackaged')[metadata_type]
-                    unpackaged += '<types>'
-                    for member in members:
-                        unpackaged += '<members>{member}</members>'.format(
-                            member=member)
-                    unpackaged += '<name>{metadata_type}</name></types>'.format(
-                        metadata_type=metadata_type)
-                else:
+                if not isinstance(kwargs.get('unpackaged'), dict):
                     raise TypeError('unpackaged metadata types must be a dict')
 
+                members = kwargs.get('unpackaged')[metadata_type]
+                unpackaged += '<types>'
+                for member in members:
+                    unpackaged += '<members>{member}</members>'.format(
+                        member=member)
+                unpackaged += '<name>{metadata_type}</name></types>'.format(
+                    metadata_type=metadata_type)
         # Compose retrieve request XML
         attributes = {
             'client': client,
@@ -551,16 +551,12 @@ class SfdcMetadataApi:
         if error_message is not None:
             error_message = error_message.text
 
-        # Check if there are any messages
-        messages = []
         message_list = result.findall('mt:details/mt:messages',
                                       self._XML_NAMESPACES)
-        for message in message_list:
-            messages.append({
+        messages = [{
                 'file': message.find('mt:fileName', self._XML_NAMESPACES).text,
                 'message': message.find('mt:problem', self._XML_NAMESPACES).text
-                })
-
+                } for message in message_list]
         # Retrieve base64 encoded ZIP file
         zipfile_base64 = result.find('mt:zipFile', self._XML_NAMESPACES).text
         zipfile = b64decode(zipfile_base64)
@@ -576,14 +572,10 @@ class SfdcMetadataApi:
         if error_message is not None:
             error_message = error_message.text
 
-        # Check if there are any messages
-        messages = []
         message_list = result.findall('mt:details/mt:messages',
                                       self._XML_NAMESPACES)
-        for message in message_list:
-            messages.append({
+        messages = [{
                 'file': message.find('mt:fileName', self._XML_NAMESPACES).text,
                 'message': message.find('mt:problem', self._XML_NAMESPACES).text
-                })
-
+                } for message in message_list]
         return state, error_message, messages
