@@ -454,8 +454,7 @@ class Salesforce:
 
         result = self.query(query, include_deleted=include_deleted, **kwargs)
         while True:
-            for record in result['records']:
-                yield record
+            yield from result['records']
             # fetch next batch if we're not done else break out of loop
             if not result['done']:
                 result = self.query_more(result['nextRecordsUrl'],
@@ -559,8 +558,7 @@ class Salesforce:
         if result.status_code >= 300:
             exception_handler(result, name=name)
 
-        sforce_limit_info = result.headers.get('Sforce-Limit-Info')
-        if sforce_limit_info:
+        if sforce_limit_info := result.headers.get('Sforce-Limit-Info'):
             self.api_usage = self.parse_api_usage(sforce_limit_info)
 
         return result
@@ -612,8 +610,7 @@ class Salesforce:
         Returns a process id and state for this deployment.
         """
         asyncId, state = self.mdapi.deploy(zipfile, sandbox, **kwargs)
-        result = {'asyncId': asyncId, 'state': state}
-        return result
+        return {'asyncId': asyncId, 'state': state}
 
     # check on a file-based deployment
     def checkDeployStatus(self, asyncId, **kwargs):
@@ -629,13 +626,12 @@ class Salesforce:
         """
         state, state_detail, deployment_detail, unit_test_detail = \
             self.mdapi.check_deploy_status(asyncId, **kwargs)
-        results = {
+        return {
             'state': state,
             'state_detail': state_detail,
             'deployment_detail': deployment_detail,
             'unit_test_detail': unit_test_detail
             }
-        return results
 
     def parse_result_to_json(self, result):
         """"Parse json from a Response object"""
@@ -921,8 +917,7 @@ class SFType:
         if result.status_code >= 300:
             exception_handler(result, self.name)
 
-        sforce_limit_info = result.headers.get('Sforce-Limit-Info')
-        if sforce_limit_info:
+        if sforce_limit_info := result.headers.get('Sforce-Limit-Info'):
             self.api_usage = Salesforce.parse_api_usage(sforce_limit_info)
 
         return result
@@ -934,10 +929,7 @@ class SFType:
 
         Returns either an `int` or a `requests.Response` object.
         """
-        if not body_flag:
-            return response.status_code
-
-        return response
+        return response.status_code if not body_flag else response
 
     def parse_result_to_json(self, result):
         """"Parse json from a Response object"""
@@ -947,23 +939,19 @@ class SFType:
     def upload_base64(self, file_path, base64_field='Body', headers=None,
                       **kwargs):
         """Upload base64 encoded file to Salesforce"""
-        data = {}
         with open(file_path, "rb") as f:
             body = base64.b64encode(f.read()).decode('utf-8')
-        data[base64_field] = body
-        result = self._call_salesforce(method='POST', url=self.base_url,
+        data = {base64_field: body}
+        return self._call_salesforce(method='POST', url=self.base_url,
                                        headers=headers, json=data, **kwargs)
-
-        return result
 
     def update_base64(self, record_id, file_path, base64_field='Body',
                       headers=None, raw_response=False,
                       **kwargs):
         """Updated base64 image from file to Salesforce"""
-        data = {}
         with open(file_path, "rb") as f:
             body = base64.b64encode(f.read()).decode('utf-8')
-        data[base64_field] = body
+        data = {base64_field: body}
         result = self._call_salesforce(method='PATCH',
                                        url=urljoin(self.base_url, record_id),
                                        json=data,

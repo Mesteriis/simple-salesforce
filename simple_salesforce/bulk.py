@@ -84,10 +84,7 @@ class SFBulkType:
         * external_id_field -- unique identifier field for upsert operations
         """
 
-        if use_serial:
-            use_serial = 1
-        else:
-            use_serial = 0
+        use_serial = 1 if use_serial else 0
         payload = {
             'operation': operation,
             'object': self.object_name,
@@ -187,11 +184,9 @@ class SFBulkType:
             batch_status = self._get_batch(job_id=batch['jobId'],
                                            batch_id=batch['id'])['state']
 
-        batch_results = self._get_batch_results(job_id=batch['jobId'],
+        return self._get_batch_results(job_id=batch['jobId'],
                                                 batch_id=batch['id'],
                                                 operation=operation)
-        result = batch_results
-        return result
 
     # pylint: disable=R0913
     def _bulk_operation(self, operation, data, use_serial=False,
@@ -231,7 +226,7 @@ class SFBulkType:
 
                 self._close_job(job_id=job['id'])
 
-        elif operation in ('query', 'queryAll'):
+        else:
             job = self._create_job(operation=operation,
                                    use_serial=use_serial,
                                    external_id_field=external_id_field)
@@ -264,41 +259,36 @@ class SFBulkType:
     # _bulk_operation wrappers to expose supported Salesforce bulk operations
     def delete(self, data, batch_size=10000, use_serial=False):
         """ soft delete records """
-        results = self._bulk_operation(use_serial=use_serial,
+        return self._bulk_operation(use_serial=use_serial,
                                        operation='delete', data=data,
                                        batch_size=batch_size)
-        return results
 
     def insert(self, data, batch_size=10000,
                use_serial=False):
         """ insert records """
-        results = self._bulk_operation(use_serial=use_serial,
+        return self._bulk_operation(use_serial=use_serial,
                                        operation='insert', data=data,
                                        batch_size=batch_size)
-        return results
 
     def upsert(self, data, external_id_field, batch_size=10000,
                use_serial=False):
         """ upsert records based on a unique identifier """
-        results = self._bulk_operation(use_serial=use_serial,
+        return self._bulk_operation(use_serial=use_serial,
                                        operation='upsert',
                                        external_id_field=external_id_field,
                                        data=data, batch_size=batch_size)
-        return results
 
     def update(self, data, batch_size=10000, use_serial=False):
         """ update records """
-        results = self._bulk_operation(use_serial=use_serial,
+        return self._bulk_operation(use_serial=use_serial,
                                        operation='update', data=data,
                                        batch_size=batch_size)
-        return results
 
     def hard_delete(self, data, batch_size=10000, use_serial=False):
         """ hard delete records """
-        results = self._bulk_operation(use_serial=use_serial,
+        return self._bulk_operation(use_serial=use_serial,
                                        operation='hardDelete', data=data,
                                        batch_size=batch_size)
-        return results
 
     def query(self, data, lazy_operation=False):
         """ bulk query """

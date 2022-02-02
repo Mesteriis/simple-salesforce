@@ -122,9 +122,7 @@ todo_include_todos = False
 # -- Autodoc configuration -----------------------------------------------------
 
 def autodoc_skip_member(app, what, name, obj, skip, options):
-    if name == "__init__":
-        return False
-    return skip
+    return False if name == "__init__" else skip
 
 # -- Apidoc --------------------------------------------------------------------
 
